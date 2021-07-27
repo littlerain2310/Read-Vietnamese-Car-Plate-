@@ -1,4 +1,5 @@
 from typing import Text
+from model import CNN_Model
 import pytesseract
 import cv2
 from lib_detection import load_model, detect_lp, im2single
@@ -12,9 +13,14 @@ import sys
 from utils import image_files_from_folder,segmantation
 import glob
 from matplotlib import pyplot as plt
-
+import os
 # Dinh nghia cac ky tu tren bien so
 char_list =  '0123456789ABCDEFGHKLMNPRSTUVXYZ'
+
+
+class_names =  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
+
 
 # Ham fine tune bien so, loai bo cac ki tu khong hop ly
 def fine_tune(lp):
@@ -41,10 +47,14 @@ img_files = image_files_from_folder(input_dir)
 # Load model LP detection
 wpod_net_path = "wpod-net_update1.json"
 wpod_net = load_model(wpod_net_path)
-
+# try:
+#     os.mkdir(os.path.join(input_dir, "transform(0.9+)"))
+# except:
+#     None
+recogChar = CNN_Model().model
+recogChar.load_weights('good2.h5')
 
 # model = E2E()
-print(len(img_files))
 for img_path in img_files:
     # create figure
     fig = plt.figure(figsize=(10, 7))
@@ -58,11 +68,14 @@ for img_path in img_files:
     fig.add_subplot(rows, columns, 1)
     filename = img_path.split('/')[-1]
     filename = filename.split('.')[0]
+
+    path = input_dir + '/transform(0.9+)/' + filename + '.jpg'
     # showing image
     plt.imshow(Ivehicle)
     plt.axis('off')
     plt.title("original")
     # cv2.imshow('input',Ivehicle)
+    # cv2.waitKey(0)
     # Kích thước lớn nhất và nhỏ nhất của 1 chiều ảnh
     Dmax = 608
     Dmin = 288
@@ -82,7 +95,7 @@ for img_path in img_files:
             
             height = Img.shape[0]
             width = Img.shape[1]
-            Img = Img[15:height-15,10:width -10]
+            Img = Img[5:height-5,10:width -10]
             fig.add_subplot(rows, columns, 2)
             # showing image
             plt.imshow(Img)
@@ -93,7 +106,7 @@ for img_path in img_files:
             # Img = LpImg[0]
             if (lp_type == 2):
                 # cv2.imshow('anh chua cat',Img)
-                print("Bien so VUONG")
+                # print("Bien so VUONG")
                 height = Img.shape[0]
                 width = Img.shape[1]
                 height_cutoff = height // 2
@@ -101,25 +114,35 @@ for img_path in img_files:
                 Img2= Img[height_cutoff:,:]
                 Img12 = np.hstack((Img1, Img2))             
             else:
-                print("Bien so DAI")
+                # print("Bien so DAI")
                 Img12 = Img
-        
-            img_draw_char,plate = segmantation(Img12,filename)
+            # cv2.imwrite(path,Img)
+            img_draw_char,chars = segmantation(Img12,filename)
+            print('Co {} ky tu'.format(len(chars)))            
+            chars = np.array([c for c in chars], dtype="float32")
+            preds = recogChar.predict(chars)
+            result =[]
+            for pred,char in zip(preds,chars): 	      
+                # find the index of the label with the largest corresponding
+                # probability, then extract the probability and label
+                i = np.argmax(pred)
+                prob = pred[i]
+                label = class_names[i]
+
+                # draw the prediction on the image
+                print(f"Predict >> {label} - {prob * 100:.2f}%")
+                if(prob * 100>55):
+                    result.append(label)
+                # cv2.imshow("character",char)
+                # cv2.waitKey(0)
             # plate =sorted_Roi(contours,binary)
             # cv2.drawContours(binary, contours, -1, (0,0,0), 3)
-            
+            plate = ''
             fig.add_subplot(rows, columns, 3)
-    
-            # # showing image
-            # plt.imshow(binary)
-            # plt.axis('off')
-            # plt.title("binary")
-            # Nhan dien bien so. Cau hinh --psm 7 la de nhan dien 1 line only
-            
-            # draw_label(Ivehicle,fine_tune(text))
-            # Hien thi anh va luu anh ra file output.png
-            # fig.add_subplot(rows, columns, 4)
-            # print("Plate la :  {}".format(plate))
+            for i in result:
+                    clean_text = re.sub('[\W_]+', '', i)
+                    clean_text = clean_text.upper()
+                    plate += clean_text     
             # showing image
             plt.imshow(img_draw_char)
             plt.axis('off')
@@ -127,7 +150,7 @@ for img_path in img_files:
             # cv2.imshow("Anh input", Ivehicle)
             # cv2.imwrite("output.png",Ivehicle)
             x+=30
-            # cv2.waitKey(0)
+            cv2.waitKey(0)
 
     plt.show()
     cv2.destroyAllWindows()

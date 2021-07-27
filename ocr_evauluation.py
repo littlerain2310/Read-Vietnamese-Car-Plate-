@@ -9,21 +9,26 @@ str1 = 'acb'
 str2 = 'abcd'
 
 acc = 0.0
-ground_truths = text_files_from_folder('ocr/gt/')
-detections = text_files_from_folder('ocr/detection/')
+
+gt_dir = sys.argv[1]
+dt_dir = sys.argv[2]
+ground_truths = text_files_from_folder(gt_dir)
+detections = text_files_from_folder(dt_dir)
 
 ground_truth_list = []
+
 for ground_truth in ground_truths:
     filename = ground_truth.split('/')[-1]
     filename = filename.split('.')[0]
     f = open(ground_truth, "r")
     gt =str(f.read())
-    detectionfile = open('ocr/detection/{}.txt'.format(filename), "r")
+    detectionfile = open('{}/{}.txt'.format(dt_dir,filename), "r")
     detect = str(detectionfile.read())
     acc_file = 100.0 - float(asrtoolkit.cer(gt,detect))
     acc += acc_file
     # print(gt)
-acc = acc /113
+acc = acc /(len(ground_truths))
+# acc = acc /60
 print(acc)
 # acc = 100.0 - float(asrtoolkit.cer(str1,str2))
 # print(acc)

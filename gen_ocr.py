@@ -11,9 +11,11 @@ import sys
 from utils import image_files_from_folder,segmantation
 import glob
 import re
-
+from model import CNN_Model
 # Dinh nghia cac ky tu tren bien so
 char_list =  '0123456789ABCDEFGHKLMNPRSTUVXYZ'
+
+class_names =  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
 # Ham fine tune bien so, loai bo cac ki tu khong hop ly
 def fine_tune(lp):
@@ -41,6 +43,10 @@ img_files = image_files_from_folder(input_dir)
 # Load model LP detection
 wpod_net_path = "wpod-net_update1.json"
 wpod_net = load_model(wpod_net_path)
+
+
+recogChar = CNN_Model().model
+recogChar.load_weights('good2.h5')
 
 # model = E2E()
 
@@ -87,14 +93,34 @@ for img_path in img_files:
                 Img12 = np.hstack((Img1, Img2))
             else:
                 # print("Bien so DAI")
-                Img12 = Img       
-             
-            _,plate = segmantation(Img12,filename)
-            # print(plate)
-            platenum +=plate
-            platenum+='\n'
-    with open('./ocr/detection/{}.txt'.format(filename), 'w') as f:
-        f.write('{}'.format(platenum))
+                Img12 = Img
+
+            plate = ''
+            img_draw_char,chars = segmantation(Img12,filename)
+            chars = np.array([c for c in chars], dtype="float32")
+            try:
+                preds = recogChar.predict(chars)
+                result =[]
+                for (pred) in (preds): 	
+                    # find the index of the label with the largest corresponding
+                    # probability, then extract the probability and label
+                    i = np.argmax(pred)
+                    prob = pred[i]
+                    label = class_names[i]
+                    if(prob * 100>55):
+                        result.append(label)
+                    # draw the prediction on the image
+                    # print(f"Predict >> {label} - {prob * 100:.2f}%")
+                # plate =sorted_Roi(contours,binary)
+                # cv2.drawContours(binary, contours, -1, (0,0,0), 3)
+                for i in result:
+                    clean_text = re.sub('[\W_]+', '', i)
+                    # clean_text = clean_text.upper()
+                    plate += clean_text
+            except:
+                plate =''
+    with open('./OCR_VN/detection/{}.txt'.format(filename), 'w') as f:
+        f.write('{}'.format(plate))
         f.close()  
             
 

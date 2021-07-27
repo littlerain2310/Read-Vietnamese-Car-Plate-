@@ -61,9 +61,9 @@ for img_path in img_files:
         pts += str(confidence) + ' '
         for i in range(4):
             pt1 = tuple(point[:,i].astype(int).tolist())
-            pts += str(pt1[0])+ ' ' +str(pt1[1])+' '
+            pts += str(int(pt1[0]))+ ' ' +str(int(pt1[1]))+' '
         pts +='\n'
-    with open('./detection/{}.txt'.format(filename), 'w') as f:
+    with open('/home/long/Study/AI/Evaluation/Wpod-evaluation/mAP/input/detection-results/{}.txt'.format(filename), 'w') as f:
         f.write('{}'.format(pts))
         f.close()  
     

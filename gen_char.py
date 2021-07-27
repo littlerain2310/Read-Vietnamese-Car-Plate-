@@ -9,17 +9,13 @@ from skimage.filters import threshold_local
 import numpy as np
 import re
 import sys
-from utils import image_files_from_folder
+from utils import *
 import glob
 from matplotlib import pyplot as plt
+from utils import segmantation
 
 
-
-def segmantation(Img12,filename):
-    # kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    # thre_mor = cv2.morphologyEx(binary, cv2.MORPH_DILATE, kernel3)
-    # cv2.imshow('not closing',binary)
-    # cv2.waitKey(0)
+def segmantation_(Img12,filename):
     img = Img12
     gray = cv2.cvtColor( Img12, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray,(19,19),0)
@@ -35,28 +31,61 @@ def segmantation(Img12,filename):
     contours = cv2.findContours(closing, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     contours = imutils.grab_contours(contours)
     contours = sorted(contours, key=lambda ctr: cv2.boundingRect(ctr)[0])
+    # contours,_ = sort_contours(contours)
     height, width = binary.shape
     binary_inverse = cv2.bitwise_not(closing)
-    # cv2.drawContours(img, contours, -1, (0,255,0), 3)
-    # print('width :'+str(width) +'height : '+ str(height))
-    # cv2.imshow('closing',binary)
-    # cv2.waitKey(0)
+
     # loop over our contours
+    char = []
     plate_num = ''
     number = 0
     pts = ''
+    candidate = []
     for c in contours:
         (x, y, w, h) = cv2.boundingRect(c)
         crop = img[y:y+h,x:x+w]
         # cv2.imshow('binary',crop)
         # cv2.waitKey(0)
-        ratio = h / float(w)
+        ratio = w / float(h)
+        solidity = cv2.contourArea(c) / float(w * h)
         area = h * w
+        area_ratio = area / float(width * height)
+        height_ratio = h / float(height)
         # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
         # approximate the contour
-        if (width / float(w) < 30) and (float(h) / height > 0.8) and (ratio > 1.0) and(area > 20) :
-            # print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
+        if  ( area >1500)  and (width / float(w) >4) and (float(h) / height > 0.3)  :
+            candidate.append(c)
+            # # print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
             # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            # number +=1
+            # crop = binary[y:y+h,x:x+w]
+            # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            # # print(crop.shape)
+            # crop=prepare(crop)
+            # # print(crop.shape)
+            # char.append(crop)
+    #sort by area
+    areaArray = []
+    for i, c in enumerate(contours):
+        area = cv2.contourArea(c)
+        areaArray.append(area)
+    #first sort the array by area
+    sorteddata = sorted(zip(areaArray, candidate), key=lambda x: x[0], reverse=True)
+    # print(len(sorteddata))
+    pts =''
+    try:
+        for n in range(1,9):
+            secondlargestcontour = sorteddata[n-1][1]
+            #draw it
+            x, y, w, h = cv2.boundingRect(secondlargestcontour)
+            pts +='character 0.9 {} {} {} {}'.format(x,y,x+w,y+h)
+            pts +='\n'
+            # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    except:
+        for n in range(len(sorteddata)):
+            secondlargestcontour = sorteddata[n-1][1]
+            #draw it
+            x, y, w, h = cv2.boundingRect(secondlargestcontour)
             pts +='character 0.9 {} {} {} {}'.format(x,y,x+w,y+h)
             pts +='\n'
     with open('/home/long/Study/AI/Evaluation/mAP/input/detection-results/{}.txt'.format(filename), 'w') as f:
@@ -67,7 +96,7 @@ def segmantation(Img12,filename):
 # Đường dẫn ảnh, các bạn đổi tên file tại đây để thử nhé
 input_dir = sys.argv[1]
 img_files = image_files_from_folder(input_dir)
-
+print(len(img_files))
 for img_path in img_files:
     # create figure
     
@@ -79,5 +108,7 @@ for img_path in img_files:
     # Adds a subplot at the 1st position
     filename = img_path.split('/')[-1]
     filename = filename.split('.')[0]
-    segmantation(Ivehicle,filename)
+    segmantation_(Ivehicle,filename)
+    # cv2.imshow('img',img)
+    # cv2.waitKey(0)
 

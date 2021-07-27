@@ -1,0 +1,11 @@
+character 0.9 0 0 21 80
+character 0.9 25 4 75 80
+character 0.9 80 5 128 80
+character 0.9 90 13 119 76
+character 0.9 134 5 179 80
+character 0.9 210 6 257 80
+character 0.9 262 7 301 80
+character 0.9 307 6 346 80
+character 0.9 364 6 402 80
+character 0.9 408 7 442 80
+character 0.9 415 14 434 71
