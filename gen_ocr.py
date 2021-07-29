@@ -96,7 +96,7 @@ for img_path in img_files:
                 Img12 = Img
 
             plate = ''
-            img_draw_char,chars = segmantation(Img12,filename)
+            _,img_draw_char,chars = segmantation(Img12,filename)
             chars = np.array([c for c in chars], dtype="float32")
             try:
                 preds = recogChar.predict(chars)

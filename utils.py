@@ -37,6 +37,25 @@ def text_files_from_folder(folder,upper=True):
 		if upper:
 			txt_file += glob('%s/*.%s' % (folder,ext.upper()))
 	return txt_file
+
+def calculating_IOU(contour1,contour2):
+	x1,y1,w1,h1 = cv2.boundingRect(contour1)
+	box1 = [x1,y1,x1+w1,y1+h1]
+	# print(box1)
+	x2,y2,w2,h2 = cv2.boundingRect(contour2)
+	box2 = [x2,y2,x2+w2,y2+h2]
+	# print(box2)
+	bi = [max(box1[0],box2[0]), max(box1[1],box2[1]), min(box1[2],box2[2]), min(box1[3],box2[3])]
+	iw = bi[2] - bi[0] + 1
+	# print(iw)
+	ih = bi[3] - bi[1] + 1
+	ov=0
+	if iw > 0 and ih > 0:
+		# compute overlap (IoU) = area of intersection / area of union
+		ua = (box1[2] - box1[0] + 1) * (box1[3] - box1[1] + 1) + (box2[2] - box2[0]
+						+ 1) * (box2[3] - box2[1] + 1) - iw * ih
+		ov = iw * ih / ua
+	return ov
 def draw_losangle(I,pts,color=(1.,0.,255.),thickness=3):
 	assert(pts.shape[0] == 2 and pts.shape[1] == 4)
 
@@ -53,7 +72,6 @@ def sort_contours(contours,center_height, x_axis_sort='LEFT_TO_RIGHT', y_axis_so
 		x_reverse = True
 	if y_axis_sort == 'BOTTOM_TO_TOP':
 		y_reverse = True
-
 	boundingBoxes = [cv2.boundingRect(c) for c in contours]
 	char = []
 	sortedByy = sorted(boundingBoxes,key = lambda b :b[1])
@@ -91,8 +109,8 @@ def segmantation(Img12,filename):
 	# cv2.imshow('not closing',binary)
 	# cv2.waitKey(0)
 	img = Img12
-	cv2.imshow('not closing',img)
-	cv2.waitKey(0)
+	# cv2.imshow('not closing',img)
+	# cv2.waitKey(0)
 	gray = cv2.cvtColor( Img12, cv2.COLOR_BGR2GRAY)
 	blur = cv2.GaussianBlur(gray,(19,19),0)
 	# cv2.imshow("Anh bien so sau chuyen xam", gray)
@@ -119,10 +137,10 @@ def segmantation(Img12,filename):
 	# #first sort the array by area
 	# sorteddata = sorted(zip(areaArray, contours), key=lambda x: x[0], reverse=True)
 
-	# cv2.drawContours(img, contours, -1, (0,255,0), 3)
+	# cv2.drawContours(img, contours, -1, (255,0,0), 3)
 	# print('width :'+str(width) +'height : '+ str(height))
-	cv2.imshow('closing',binary)
-	cv2.waitKey(0)
+	# cv2.imshow('closing',binary)
+	# cv2.waitKey(0)
 	# loop over our contours
 	char = []
 	plate_num = ''
@@ -141,7 +159,7 @@ def segmantation(Img12,filename):
 		height_ratio = h / float(height)
 		# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
 		# approximate the contour
-		if( area >1500)  and (width / float(w) >4) and (float(h) / height > 0.3)  :
+		if(area_ratio >0.03)and (w / float(width) <0.25) and (float(h) / height > 0.3) and (w / float(width) >0.03) :
 			# print(area)
 			candidate.append(c)
             # # print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
@@ -153,10 +171,35 @@ def segmantation(Img12,filename):
 			# crop=prepare(crop)
 			# # print(crop.shape)
 			# char.append(crop)
+
+	candidate_rm_inner = []
+	#get rid of inner contours
+	n = len(candidate)
+	# print(n)
+	for i in range(n):
+		for j in range(i+1, n):
+			# print(j)
+			# print(len(candidate))
+			ov = calculating_IOU(candidate[i],candidate[j])
+			if ov > 0.3:
+				area1 = cv2.contourArea(candidate[i])
+				area2 = cv2.contourArea(candidate[j])
+				if area1 > area2 :
+					candidate_rm_inner.append(candidate[j])
+					# print(ov)
+				else:
+					# print(ov)
+					candidate_rm_inner.append(candidate[i])
+	for c in candidate_rm_inner:
+		# print('a')
+		try:
+			candidate.remove(c)
+		except:
+			pass
 	#sort by area
 	areaArray = []
 	truly_contour = []
-	for i, c in enumerate(contours):
+	for i, c in enumerate(candidate):
 		area = cv2.contourArea(c)
 		areaArray.append(area)
 	#first sort the array by area
@@ -191,12 +234,12 @@ def segmantation(Img12,filename):
 		crop = binary[y:y+h,x:x+w]
 		crop=prepare(crop)
 		char.append(crop)
-		cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+		cv2.rectangle(img, (x, y), (x + w, y + h), (0,255 , 0), 2)
 	# char =sorted(char,key= lambda x : x[0])
 	# char =sorted(char,key= lambda x : x[1])
 	# cv2.imshow('Pix',img)
 	# cv2.waitKey(0)
-	return img,char   
+	return closing,img,char   
 
 def prepare(img):
     (tH, tW) = img.shape

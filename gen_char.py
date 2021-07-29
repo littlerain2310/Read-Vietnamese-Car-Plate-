@@ -12,7 +12,7 @@ import sys
 from utils import *
 import glob
 from matplotlib import pyplot as plt
-from utils import segmantation
+from utils import segmantation,calculating_IOU
 
 
 def segmantation_(Img12,filename):
@@ -53,7 +53,7 @@ def segmantation_(Img12,filename):
         height_ratio = h / float(height)
         # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
         # approximate the contour
-        if  ( area >1500)  and (width / float(w) >4) and (float(h) / height > 0.3)  :
+        if (area_ratio >0.03)and (w / float(width) <0.25) and (float(h) / height > 0.3) and (w / float(width) >0.03) :
             candidate.append(c)
             # # print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
             # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -64,6 +64,30 @@ def segmantation_(Img12,filename):
             # crop=prepare(crop)
             # # print(crop.shape)
             # char.append(crop)
+    
+    candidate_rm_inner = []
+    #get rid of inner contours
+    n = len(candidate)
+    # print(n)
+    for i in range(n):
+        for j in range(i+1, n):
+            # print(j)
+            # print(len(candidate))
+            ov = calculating_IOU(candidate[i],candidate[j])
+            if ov > 0.3:
+                area1 = cv2.contourArea(candidate[i])
+                area2 = cv2.contourArea(candidate[j])
+                if area1 > area2 :
+                    candidate_rm_inner.append(candidate[j])
+                    # print(ov)
+                else:
+                    # print(ov)
+                    candidate_rm_inner.append(candidate[i])
+    for c in candidate_rm_inner:
+        try:
+            candidate.remove(c)
+        except:
+            pass
     #sort by area
     areaArray = []
     for i, c in enumerate(contours):

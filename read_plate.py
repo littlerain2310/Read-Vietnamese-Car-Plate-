@@ -117,7 +117,12 @@ for img_path in img_files:
                 # print("Bien so DAI")
                 Img12 = Img
             # cv2.imwrite(path,Img)
-            img_draw_char,chars = segmantation(Img12,filename)
+            closing,img_draw_char,chars = segmantation(Img12,filename)
+            fig.add_subplot(rows, columns, 3)
+            # showing image
+            plt.imshow(closing)
+            plt.axis('off')
+            plt.title("binary")
             print('Co {} ky tu'.format(len(chars)))            
             chars = np.array([c for c in chars], dtype="float32")
             preds = recogChar.predict(chars)
@@ -138,7 +143,8 @@ for img_path in img_files:
             # plate =sorted_Roi(contours,binary)
             # cv2.drawContours(binary, contours, -1, (0,0,0), 3)
             plate = ''
-            fig.add_subplot(rows, columns, 3)
+
+            fig.add_subplot(rows, columns, 4)
             for i in result:
                     clean_text = re.sub('[\W_]+', '', i)
                     clean_text = clean_text.upper()
