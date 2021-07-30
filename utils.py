@@ -37,6 +37,26 @@ def text_files_from_folder(folder,upper=True):
 		if upper:
 			txt_file += glob('%s/*.%s' % (folder,ext.upper()))
 	return txt_file
+def group_height (contours):
+	boundingBoxes = [cv2.boundingRect(c) for c in contours]
+	heights = [b[3] for b in boundingBoxes ]
+	group_height = []
+	prev = None
+	for height in heights:
+		if not prev or height - prev <= 15:
+			group_height.append(height)
+		else:
+			yield group_height
+			group_height = [height]
+		prev = height
+	if group_height:
+		yield group_height
+def cluster_height(contuors):
+	avg_height = 0
+	for common_height in group_height(contuors):
+		if len(common_height) > 3:
+			avg_height = sum(common_height) / len(common_height)
+	return avg_height
 
 def calculating_IOU(contour1,contour2):
 	x1,y1,w1,h1 = cv2.boundingRect(contour1)
@@ -102,7 +122,104 @@ def sort_contours(contours,center_height, x_axis_sort='LEFT_TO_RIGHT', y_axis_so
 	# key=lambda b:b[1][1], reverse=y_reverse))
 	# # return the list of sorted contours and bounding boxes
 	return char
+def contours_one_line(img,closing,avg_height):
+	contours = cv2.findContours(closing, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+	contours = imutils.grab_contours(contours)
+	# contours = sorted(contours, key=lambda ctr: cv2.boundingRect(ctr)[0])
+	# contours,_ = sort_contours(contours)
+	height, width = closing.shape
+	center_height = height / 2
+	binary_inverse = cv2.bitwise_not(closing)
+	#sort by area
+	# areaArray = []
+	# for i, c in enumerate(contours):
+	# 	area = cv2.contourArea(c)
+	# 	areaArray.append(area)
+	# #first sort the array by area
+	# sorteddata = sorted(zip(areaArray, contours), key=lambda x: x[0], reverse=True)
 
+	# cv2.drawContours(img, contours, -1, (255,0,0), 3)
+	# print('width :'+str(width) +'height : '+ str(height))
+	# cv2.imshow('closing',binary)
+	# cv2.waitKey(0)
+	# loop over our contours
+	
+	candidate = []
+	for c in contours:
+		(x, y, w, h) = cv2.boundingRect(c)
+		# cv2.imshow('binary',crop)
+		# cv2.waitKey(0)
+		ratio = h / float(w)
+		solidity = cv2.contourArea(c) / float(w * h)
+		area = h * w
+		area_ratio = area / float(width * height)
+		height_ratio = h / float(height)
+		height_truly = abs(h - avg_height)
+		# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+		# approximate the contour
+		if (w / float(width) <0.25) and (height_truly <= 7) and (w / float(width) >0.03) :
+			# print(area)
+			candidate.append(c)
+            # # print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
+			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+			# number +=1
+			# crop = binary[y:y+h,x:x+w]
+			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+			# # print(crop.shape)
+			# crop=prepare(crop)
+			# # print(crop.shape)
+			# char.append(crop)
+
+	candidate_rm_inner = []
+	#get rid of inner contours
+	n = len(candidate)
+	for i in range(n):
+		for j in range(i+1, n):
+			# print(j)
+			# print(len(candidate))
+			ov = calculating_IOU(candidate[i],candidate[j])
+			if ov > 0.3:
+				area1 = cv2.contourArea(candidate[i])
+				area2 = cv2.contourArea(candidate[j])
+				if area1 > area2 :
+					candidate_rm_inner.append(candidate[j])
+					# print(ov)
+				else:
+					# print(ov)
+					candidate_rm_inner.append(candidate[i])
+	for c in candidate_rm_inner:
+		# print('a')
+		try:
+			candidate.remove(c)
+		except:
+			pass
+	
+	#sort by area
+	areaArray = []
+	truly_contour = []
+	for i, c in enumerate(candidate):
+		area = cv2.contourArea(c)
+		areaArray.append(area)
+	#first sort the array by area
+	sorteddata = sorted(zip(areaArray, candidate), key=lambda x: x[0], reverse=True)
+	# print(len(sorteddata))
+	if len(sorteddata) >7:
+		for n in range(1,9):
+			Ndlargestcontour = sorteddata[n-1][1]
+			truly_contour.append(Ndlargestcontour)
+			#draw it
+			# x, y, w, h = cv2.boundingRect(Ndlargestcontour)
+			# crop = binary[y:y+h,x:x+w]
+			# crop=prepare(crop)
+			# char.append(crop)
+			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+	else:
+		for n in range(len(sorteddata)):
+			Ndlargestcontour = sorteddata[n-1][1]
+			truly_contour.append(Ndlargestcontour)
+			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+	return img,truly_contour
+	
 def segmantation(Img12,filename):
 	# kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
 	# thre_mor = cv2.morphologyEx(binary, cv2.MORPH_DILATE, kernel3)
@@ -196,6 +313,7 @@ def segmantation(Img12,filename):
 			candidate.remove(c)
 		except:
 			pass
+	
 	#sort by area
 	areaArray = []
 	truly_contour = []
@@ -225,9 +343,28 @@ def segmantation(Img12,filename):
 			# crop=prepare(crop)
 			# char.append(crop)
 			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-	
+	avg_height = cluster_height(truly_contour)
+	two_line = False
+	if avg_height <= center_height:
+		two_line = True
+	if two_line:
+		height_cutoff = height // 2
+		Img1= closing[:height_cutoff,:]
+		Img2= closing[height_cutoff:,:]
+		closing = np.hstack((Img1, Img2)) 
+		Img1= binary[:height_cutoff,:]
+		Img2= binary[height_cutoff:,:]
+		binary = np.hstack((Img1, Img2)) 
+		Img1= img[:height_cutoff,:]
+		Img2= img[height_cutoff:,:]
+		img = np.hstack((Img1, Img2)) 
+		
+ 
+	img,truly_contour = contours_one_line(img,closing,avg_height)
+
+	height, width = closing.shape
+	center_height = height / 2
 	boxes = sort_contours(truly_contour,center_height)
-	
 	for b in boxes:
 		x,y,w,h = b
 		# print('x :{}, y : {}'.format(x,y))
