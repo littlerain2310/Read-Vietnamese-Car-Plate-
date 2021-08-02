@@ -73,6 +73,7 @@ for img_path in img_files:
     platenum =''
     x= 0
     if (len(LpImg)):
+        plate = ''
         for Img in LpImg:
             # Chuyen doi anh bien so
             Img = cv2.convertScaleAbs(Img, alpha=(255.0))
@@ -95,8 +96,8 @@ for img_path in img_files:
                 # print("Bien so DAI")
                 Img12 = Img
 
-            plate = ''
-            _,img_draw_char,chars = segmantation(Img12,filename)
+            
+            _,img_draw_char,chars,_ = segmantation(Img12,filename)
             chars = np.array([c for c in chars], dtype="float32")
             try:
                 preds = recogChar.predict(chars)
@@ -118,7 +119,7 @@ for img_path in img_files:
                     # clean_text = clean_text.upper()
                     plate += clean_text
             except:
-                plate =''
+                plate +=''
     with open('./OCR_VN/detection/{}.txt'.format(filename), 'w') as f:
         f.write('{}'.format(plate))
         f.close()  

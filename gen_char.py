@@ -12,7 +12,7 @@ import sys
 from utils import *
 import glob
 from matplotlib import pyplot as plt
-from utils import segmantation,calculating_IOU
+from utils import segmantation,calculating_IOU,sort_contours
 
 
 def segmantation_(Img12,filename):
@@ -33,6 +33,7 @@ def segmantation_(Img12,filename):
     contours = sorted(contours, key=lambda ctr: cv2.boundingRect(ctr)[0])
     # contours,_ = sort_contours(contours)
     height, width = binary.shape
+    center_height =height / 2
     binary_inverse = cv2.bitwise_not(closing)
 
     # loop over our contours
@@ -90,31 +91,43 @@ def segmantation_(Img12,filename):
             pass
     #sort by area
     areaArray = []
+    truly_contour =[]
     for i, c in enumerate(contours):
         area = cv2.contourArea(c)
         areaArray.append(area)
     #first sort the array by area
     sorteddata = sorted(zip(areaArray, candidate), key=lambda x: x[0], reverse=True)
-    # print(len(sorteddata))
+    print(len(sorteddata))
     pts =''
     try:
         for n in range(1,9):
-            secondlargestcontour = sorteddata[n-1][1]
+            Ndlargestcontour = sorteddata[n-1][1]
+            truly_contour.append(Ndlargestcontour)
             #draw it
-            x, y, w, h = cv2.boundingRect(secondlargestcontour)
+            x, y, w, h = cv2.boundingRect(Ndlargestcontour)
+            # print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
+
             pts +='character 0.9 {} {} {} {}'.format(x,y,x+w,y+h)
             pts +='\n'
             # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
     except:
         for n in range(len(sorteddata)):
-            secondlargestcontour = sorteddata[n-1][1]
+            Ndlargestcontour = sorteddata[n-1][1]
+            truly_contour.append(Ndlargestcontour)
             #draw it
-            x, y, w, h = cv2.boundingRect(secondlargestcontour)
+            x, y, w, h = cv2.boundingRect(Ndlargestcontour)
+            # print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
+
             pts +='character 0.9 {} {} {} {}'.format(x,y,x+w,y+h)
             pts +='\n'
-    with open('/home/long/Study/AI/Evaluation/mAP/input/detection-results/{}.txt'.format(filename), 'w') as f:
-        f.write('{}'.format(pts))
-        f.close()  
+    boxes = sort_contours(truly_contour,center_height)
+	
+    for b in boxes:
+        x,y,w,h = b
+        print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
+    # with open('/home/long/Study/AI/Evaluation/mAP/input/detection-results/{}.txt'.format(filename), 'w') as f:
+    #     f.write('{}'.format(pts))
+    #     f.close()  
 	
 
 # Đường dẫn ảnh, các bạn đổi tên file tại đây để thử nhé
@@ -132,7 +145,19 @@ for img_path in img_files:
     # Adds a subplot at the 1st position
     filename = img_path.split('/')[-1]
     filename = filename.split('.')[0]
-    segmantation_(Ivehicle,filename)
+    # segmantation_(Ivehicle,filename)
+    closing,img_draw_char,_,boxes = segmantation(Ivehicle,filename)
+    pts =''
+    cv2.imshow('close',closing)
+    cv2.imshow('draw',img_draw_char)
+    cv2.waitKey(0)
+    for b in boxes:
+        x,y,w,h = b
+        pts +='character 0.9 {} {} {} {}'.format(x,y,x+w,y+h)
+        pts +='\n'
+    # with open('/home/long/Study/AI/Evaluation/mAP/input/detection-results/{}.txt'.format(filename), 'w') as f:
+    #     f.write('{}'.format(pts))
+    #     f.close()
     # cv2.imshow('img',img)
     # cv2.waitKey(0)
 

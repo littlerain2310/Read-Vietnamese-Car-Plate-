@@ -89,6 +89,8 @@ for img_path in img_files:
 
     x= 0
     if (len(LpImg)):
+        print(len(LpImg))
+        n=0
         for Img in LpImg:
             # Chuyen doi anh bien so
             Img = cv2.convertScaleAbs(Img, alpha=(255.0))
@@ -96,7 +98,7 @@ for img_path in img_files:
             height = Img.shape[0]
             width = Img.shape[1]
             Img = Img[5:height-5,10:width -10]
-            fig.add_subplot(rows, columns, 2)
+            fig.add_subplot(rows, columns, 2+n)
             # showing image
             plt.imshow(Img)
             plt.axis('off')
@@ -117,15 +119,19 @@ for img_path in img_files:
                 # print("Bien so DAI")
                 Img12 = Img
             # cv2.imwrite(path,Img)
-            closing,img_draw_char,chars = segmantation(Img12,filename)
-            fig.add_subplot(rows, columns, 3)
+            closing,img_draw_char,chars,_ = segmantation(Img12,filename)
+            fig.add_subplot(rows, columns, 3+n)
             # showing image
             plt.imshow(closing)
             plt.axis('off')
             plt.title("binary")
             print('Co {} ky tu'.format(len(chars)))            
             chars = np.array([c for c in chars], dtype="float32")
-            preds = recogChar.predict(chars)
+            try:
+                preds = recogChar.predict(chars)
+            except:
+                cv2.imshow('img {}'.format(filename),closing)
+                cv2.waitKey(0)
             result =[]
             for pred,char in zip(preds,chars): 	      
                 # find the index of the label with the largest corresponding
@@ -144,7 +150,7 @@ for img_path in img_files:
             # cv2.drawContours(binary, contours, -1, (0,0,0), 3)
             plate = ''
 
-            fig.add_subplot(rows, columns, 4)
+            fig.add_subplot(rows, columns, 4+n)
             for i in result:
                     clean_text = re.sub('[\W_]+', '', i)
                     clean_text = clean_text.upper()
@@ -153,6 +159,7 @@ for img_path in img_files:
             plt.imshow(img_draw_char)
             plt.axis('off')
             plt.title("{}".format(plate))
+            n+=3
             # cv2.imshow("Anh input", Ivehicle)
             # cv2.imwrite("output.png",Ivehicle)
             x+=30

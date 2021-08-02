@@ -29,7 +29,7 @@ for img_path in img_files:
     # Adds a subplot at the 1st position
     filename = img_path.split('/')[-1]
     filename = filename.split('.')[0]
-    _,img_draw_char,chars=segmantation(Ivehicle,filename)
+    _,img_draw_char,chars,_=segmantation(Ivehicle,filename)
     # cv2.imshow('img',img)
     # cv2.waitKey(0)
     chars = np.array([c for c in chars], dtype="float32")

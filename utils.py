@@ -155,13 +155,13 @@ def contours_one_line(img,closing,avg_height):
 		area_ratio = area / float(width * height)
 		height_ratio = h / float(height)
 		height_truly = abs(h - avg_height)
-		# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+		# cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
 		# approximate the contour
-		if (w / float(width) <0.25) and (height_truly <= 7) and (w / float(width) >0.03) :
+		if (w / float(width) <0.25) and (height_truly <= 16) and (w / float(width) >0.03) :
 			# print(area)
 			candidate.append(c)
             # # print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
-			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+			# cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
 			# number +=1
 			# crop = binary[y:y+h,x:x+w]
 			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -362,12 +362,38 @@ def segmantation(Img12,filename):
  
 	img,truly_contour = contours_one_line(img,closing,avg_height)
 
-	height, width = closing.shape
-	center_height = height / 2
-	boxes = sort_contours(truly_contour,center_height)
+	height_2, width_2 = closing.shape
+	center_height = height_2 / 2
+
+	boundingBoxes = [cv2.boundingRect(c) for c in truly_contour]
+	#sortbyX
+	boxes = sorted(boundingBoxes,key = lambda b :b[0])
+	boxes_4_eval = []
+	if two_line:
+		first_line = boxes[:3]
+		line_two = boxes[3:]
+		for b in first_line:
+			x,y,w,h = b
+			boxes_4_eval.append(b)
+			# print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
+		for b in line_two:
+			x,y,w,h = b
+			x = x -width
+			y = y+height_cutoff
+			b= x,y,w,h
+			boxes_4_eval.append(b)
+			# print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
+	else:
+		boxes_4_eval = boxes
+		for b in boxes:
+			x,y,w,h = b
+			# print('x :{}, y : {}'.format(x,y))
+			# print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
+	# boxes = sort_contours(truly_contour,center_height)
 	for b in boxes:
 		x,y,w,h = b
 		# print('x :{}, y : {}'.format(x,y))
+		# print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
 		crop = binary[y:y+h,x:x+w]
 		crop=prepare(crop)
 		char.append(crop)
@@ -376,7 +402,7 @@ def segmantation(Img12,filename):
 	# char =sorted(char,key= lambda x : x[1])
 	# cv2.imshow('Pix',img)
 	# cv2.waitKey(0)
-	return closing,img,char   
+	return closing,img,char,boxes_4_eval   
 
 def prepare(img):
     (tH, tW) = img.shape
