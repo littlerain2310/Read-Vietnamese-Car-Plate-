@@ -148,16 +148,16 @@ for img_path in img_files:
     # segmantation_(Ivehicle,filename)
     closing,img_draw_char,_,boxes = segmantation(Ivehicle,filename)
     pts =''
-    cv2.imshow('close',closing)
-    cv2.imshow('draw',img_draw_char)
-    cv2.waitKey(0)
+    # cv2.imshow('close',closing)
+    # cv2.imshow('draw',img_draw_char)
+    # cv2.waitKey(0)
     for b in boxes:
         x,y,w,h = b
         pts +='character 0.9 {} {} {} {}'.format(x,y,x+w,y+h)
         pts +='\n'
-    # with open('/home/long/Study/AI/Evaluation/mAP/input/detection-results/{}.txt'.format(filename), 'w') as f:
-    #     f.write('{}'.format(pts))
-    #     f.close()
+    with open('/home/long/Study/AI/Evaluation/mAP/input/detection-results/{}.txt'.format(filename), 'w') as f:
+        f.write('{}'.format(pts))
+        f.close()
     # cv2.imshow('img',img)
     # cv2.waitKey(0)
 

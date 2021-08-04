@@ -70,7 +70,7 @@ for img_path in img_files:
     _ , LpImg, lp_type,_,_ = detect_lp(wpod_net, im2single(Ivehicle), bound_dim, lp_threshold=0.5)
 
 
-    platenum =''
+    
     x= 0
     if (len(LpImg)):
         plate = ''
@@ -79,7 +79,7 @@ for img_path in img_files:
             Img = cv2.convertScaleAbs(Img, alpha=(255.0))
             height = Img.shape[0]
             width = Img.shape[1]
-            Img = Img[15:height-15,10:width -10]
+            Img = Img[5:height-5,10:width -10]
             # Img = LpImg[0]
             if (lp_type == 2):
                 # cv2.imshow('anh chua cat',Img)
@@ -99,27 +99,31 @@ for img_path in img_files:
             
             _,img_draw_char,chars,_ = segmantation(Img12,filename)
             chars = np.array([c for c in chars], dtype="float32")
-            try:
-                preds = recogChar.predict(chars)
-                result =[]
-                for (pred) in (preds): 	
-                    # find the index of the label with the largest corresponding
-                    # probability, then extract the probability and label
-                    i = np.argmax(pred)
-                    prob = pred[i]
-                    label = class_names[i]
-                    if(prob * 100>55):
-                        result.append(label)
-                    # draw the prediction on the image
-                    # print(f"Predict >> {label} - {prob * 100:.2f}%")
-                # plate =sorted_Roi(contours,binary)
-                # cv2.drawContours(binary, contours, -1, (0,0,0), 3)
-                for i in result:
-                    clean_text = re.sub('[\W_]+', '', i)
-                    # clean_text = clean_text.upper()
-                    plate += clean_text
-            except:
-                plate +=''
+            if len(chars) < 2:
+                print(filename)
+                continue
+            
+            preds = recogChar.predict(chars)
+            result =[]
+            for (pred) in (preds): 	
+                # find the index of the label with the largest corresponding
+                # probability, then extract the probability and label
+                i = np.argmax(pred)
+                prob = pred[i]
+                label = class_names[i]
+                if(prob * 100>55):
+                    result.append(label)
+                # draw the prediction on the image
+                # print(f"Predict >> {label} - {prob * 100:.2f}%")
+            # plate =sorted_Roi(contours,binary)
+            
+            # cv2.drawContours(binary, contours, -1, (0,0,0), 3)
+            for i in result:
+                clean_text = re.sub('[\W_]+', '', i)
+                # clean_text = clean_text.upper()
+                plate += clean_text
+            # cv2.imshow('{}'.format(plate),Img12)
+            # cv2.waitKey(0)
     with open('./OCR_VN/detection/{}.txt'.format(filename), 'w') as f:
         f.write('{}'.format(plate))
         f.close()  

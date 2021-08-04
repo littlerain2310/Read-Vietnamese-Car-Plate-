@@ -1,4 +1,6 @@
 from typing import Text
+
+from tensorflow.python.keras.engine.input_spec import display_shape
 from model import CNN_Model
 import pytesseract
 import cv2
@@ -18,7 +20,7 @@ import os
 char_list =  '0123456789ABCDEFGHKLMNPRSTUVXYZ'
 
 
-class_names =  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+class_names =  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
 
 
@@ -60,8 +62,8 @@ for img_path in img_files:
     fig = plt.figure(figsize=(10, 7))
     
     # setting values to rows and column variables
-    rows = 2
-    columns = 2
+    rows = 3
+    columns = 3
     # Đọc file ảnh đầu vào
     Ivehicle = cv2.imread(img_path)
     # Adds a subplot at the 1st position
@@ -85,7 +87,7 @@ for img_path in img_files:
     side = int(ratio * Dmin)
     bound_dim = min(side, Dmax)
 
-    _ , LpImg, lp_type,_,_ = detect_lp(wpod_net, im2single(Ivehicle), bound_dim, lp_threshold=0.5)
+    _ , LpImg, lp_type,_,score = detect_lp(wpod_net, im2single(Ivehicle), bound_dim, lp_threshold=0.5)
 
     x= 0
     if (len(LpImg)):
@@ -98,11 +100,7 @@ for img_path in img_files:
             height = Img.shape[0]
             width = Img.shape[1]
             Img = Img[5:height-5,10:width -10]
-            fig.add_subplot(rows, columns, 2+n)
-            # showing image
-            plt.imshow(Img)
-            plt.axis('off')
-            plt.title("cropped")
+            
             # cv2.imshow('crop',Img)
             # cv2.waitKey(0)
             # Img = LpImg[0]
@@ -120,18 +118,12 @@ for img_path in img_files:
                 Img12 = Img
             # cv2.imwrite(path,Img)
             closing,img_draw_char,chars,_ = segmantation(Img12,filename)
-            fig.add_subplot(rows, columns, 3+n)
-            # showing image
-            plt.imshow(closing)
-            plt.axis('off')
-            plt.title("binary")
+            
             print('Co {} ky tu'.format(len(chars)))            
             chars = np.array([c for c in chars], dtype="float32")
-            try:
-                preds = recogChar.predict(chars)
-            except:
-                cv2.imshow('img {}'.format(filename),closing)
-                cv2.waitKey(0)
+            if len(chars) < 1:
+                continue
+            preds = recogChar.predict(chars)
             result =[]
             for pred,char in zip(preds,chars): 	      
                 # find the index of the label with the largest corresponding
@@ -149,7 +141,18 @@ for img_path in img_files:
             # plate =sorted_Roi(contours,binary)
             # cv2.drawContours(binary, contours, -1, (0,0,0), 3)
             plate = ''
-
+            # display
+            fig.add_subplot(rows, columns, 2+n)
+            # showing image
+            plt.imshow(Img)
+            plt.axis('off')
+            plt.title("cropped ")
+            fig.add_subplot(rows, columns, 3+n)
+            # showing image
+            plt.imshow(closing)
+            plt.axis('off')
+            plt.title("binary")
+            
             fig.add_subplot(rows, columns, 4+n)
             for i in result:
                     clean_text = re.sub('[\W_]+', '', i)
@@ -159,11 +162,12 @@ for img_path in img_files:
             plt.imshow(img_draw_char)
             plt.axis('off')
             plt.title("{}".format(plate))
+            print('hekk')
             n+=3
             # cv2.imshow("Anh input", Ivehicle)
             # cv2.imwrite("output.png",Ivehicle)
             x+=30
-            cv2.waitKey(0)
+            
 
     plt.show()
     cv2.destroyAllWindows()

@@ -8,7 +8,7 @@ from model import CNN_Model
 import numpy as np
 import re
 
-class_names =  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+class_names =  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
 
 # Đường dẫn ảnh, các bạn đổi tên file tại đây để thử nhé
@@ -33,11 +33,9 @@ for img_path in img_files:
     # cv2.imshow('img',img)
     # cv2.waitKey(0)
     chars = np.array([c for c in chars], dtype="float32")
-    try:
-        preds = recogChar.predict(chars)
-    except:
-        cv2.imshow('error',img_draw_char)
-        cv2.waitKey(0)
+    if len(chars) <=2:
+        continue
+    preds = recogChar.predict(chars)
     result =[]
     for (pred) in (preds): 	
         # find the index of the label with the largest corresponding
@@ -55,7 +53,10 @@ for img_path in img_files:
     platenum = ''
     for i in result:
             clean_text = re.sub('[\W_]+', '', i)
-            platenum += clean_text     
+            platenum += clean_text  
+    # print(platenum)
+    # cv2.imshow('after all',img_draw_char)
+    # cv2.waitKey(0)
     with open('./{}/detection_ocr/{}.txt'.format(input_dir,filename), 'w') as f:
         f.write('{}'.format(platenum))
         f.close()   

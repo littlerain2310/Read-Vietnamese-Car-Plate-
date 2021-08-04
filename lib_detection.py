@@ -198,6 +198,7 @@ def reconstruct(I, Iresized, Yr, lp_threshold):
     if len(final_labels):
         final_labels.sort(key=lambda x: x.prob(), reverse=True)
         for _, label in enumerate(final_labels):
+            # print(label.prob())
             t_ptsh = getRectPts(0, 0, out_size[0], out_size[1])
             # print(t_ptsh)
             ptsh = np.concatenate((label.pts * getWH(I.shape).reshape((2, 1)), np.ones((1, 4))))

@@ -157,8 +157,9 @@ def contours_one_line(img,closing,avg_height):
 		height_truly = abs(h - avg_height)
 		# cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
 		# approximate the contour
-		if (w / float(width) <0.25) and (height_truly <= 16) and (w / float(width) >0.03) :
-			# print(area)
+		if   (w / float(width) <0.25) and (height_truly <= 16) and (w / float(width) >0.03) and (height_ratio >0.3) :
+			# print(area_ratio,area)
+
 			candidate.append(c)
             # # print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
 			# cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
