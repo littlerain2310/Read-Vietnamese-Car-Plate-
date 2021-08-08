@@ -46,7 +46,7 @@ wpod_net = load_model(wpod_net_path)
 
 
 recogChar = CNN_Model().model
-recogChar.load_weights('good2.h5')
+recogChar.load_weights('new.h5')
 
 # model = E2E()
 
@@ -111,8 +111,9 @@ for img_path in img_files:
                 i = np.argmax(pred)
                 prob = pred[i]
                 label = class_names[i]
-                if(prob * 100>55):
-                    result.append(label)
+                result.append(label)
+                # if(prob * 100>55):
+                #     result.append(label)
                 # draw the prediction on the image
                 # print(f"Predict >> {label} - {prob * 100:.2f}%")
             # plate =sorted_Roi(contours,binary)

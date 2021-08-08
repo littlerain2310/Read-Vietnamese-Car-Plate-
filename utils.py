@@ -12,6 +12,34 @@ import imutils
 import pytesseract
 
 
+def fix_dimension(img): 
+  new_img = np.zeros((28,28,3))
+  for i in range(3):
+    new_img[:,:,i] = img
+  return new_img
+
+def prepare(img):
+	
+	# print(binary.shape)    
+	# img = image.img_to_array(img, dtype='uint8')
+	# thresh = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
+	# cv2.THRESH_BINARY,11,2)
+	(tH, tW) = img.shape
+	dX = int(max(0, 28 - tW) / 2.0)
+	dY = int(max(0, 28 - tH) / 2.0)  
+	# pad the image and force 28x28 dimensions
+	padded = cv2.copyMakeBorder(img, top=dY, bottom=dY, left=dX, right=dX, borderType=cv2.BORDER_CONSTANT, value=(0, 0, 0))
+	padded = cv2.resize(img, (28, 28))
+	# prepare the padded image for classification via our
+	# handwriting OCR model
+	# padded = padded.astype("float32") / 255.0
+	# padded = np.expand_dims(padded, axis=-1)
+	# padded = tf.expand_dims(padded, 0) 
+	img = fix_dimension(padded)
+	
+	
+	return img
+
 def json_files_from_folder(folder,upper=True):
 	extensions = ['json']
 	img_files  = []
@@ -405,16 +433,3 @@ def segmantation(Img12,filename):
 	# cv2.waitKey(0)
 	return closing,img,char,boxes_4_eval   
 
-def prepare(img):
-    (tH, tW) = img.shape
-    dX = int(max(0, 32 - tW) / 2.0)
-    dY = int(max(0, 32 - tH) / 2.0)  
-    # pad the image and force 32x32 dimensions
-    padded = cv2.copyMakeBorder(img, top=dY, bottom=dY, left=dX, right=dX, borderType=cv2.BORDER_CONSTANT, value=(0, 0, 0))
-    padded = cv2.resize(img, (32, 32))
-    # prepare the padded image for classification via our
-    # handwriting OCR model
-    padded = padded.astype("float32") / 255.0
-    padded = np.expand_dims(padded, axis=-1)
-    # padded = tf.expand_dims(padded, 0) 
-    return padded

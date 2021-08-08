@@ -54,7 +54,7 @@ wpod_net = load_model(wpod_net_path)
 # except:
 #     None
 recogChar = CNN_Model().model
-recogChar.load_weights('good2.h5')
+recogChar.load_weights('new.h5')
 
 # model = E2E()
 for img_path in img_files:
@@ -121,21 +121,22 @@ for img_path in img_files:
             
             print('Co {} ky tu'.format(len(chars)))            
             chars = np.array([c for c in chars], dtype="float32")
-            if len(chars) < 1:
+            if len(chars) < 2:
                 continue
+            characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+            dic = {}
+            for i,c in enumerate(characters):
+                dic[i] = c
             preds = recogChar.predict(chars)
             result =[]
-            for pred,char in zip(preds,chars): 	      
+            for pred,char in zip(preds,chars): 	    
                 # find the index of the label with the largest corresponding
                 # probability, then extract the probability and label
                 i = np.argmax(pred)
                 prob = pred[i]
-                label = class_names[i]
-
-                # draw the prediction on the image
-                print(f"Predict >> {label} - {prob * 100:.2f}%")
-                if(prob * 100>55):
-                    result.append(label)
+                label = dic[i]
+                result.append(label)
+                
                 # cv2.imshow("character",char)
                 # cv2.waitKey(0)
             # plate =sorted_Roi(contours,binary)
