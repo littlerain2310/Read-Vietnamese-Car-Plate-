@@ -62,8 +62,8 @@ for img_path in img_files:
     fig = plt.figure(figsize=(10, 7))
     
     # setting values to rows and column variables
-    rows = 3
-    columns = 3
+    rows = 2
+    columns = 2
     # Đọc file ảnh đầu vào
     Ivehicle = cv2.imread(img_path)
     # Adds a subplot at the 1st position
@@ -117,24 +117,31 @@ for img_path in img_files:
                 # print("Bien so DAI")
                 Img12 = Img
             # cv2.imwrite(path,Img)
-            closing,img_draw_char,chars,_ = segmantation(Img12,filename)
+            origin = Img12
+            
+            closing,img_draw_char,chars,_,_ = segmantation(Img12,filename)
             
             print('Co {} ky tu'.format(len(chars)))            
             chars = np.array([c for c in chars], dtype="float32")
-            if len(chars) < 2:
+            if len(chars) <= 2:
                 continue
+            fig.add_subplot(rows, columns, 2+n)
+            # showing image
+            plt.imshow(origin)
+            plt.axis('off')
+            plt.title("cropped ")
             characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
             dic = {}
             for i,c in enumerate(characters):
                 dic[i] = c
             preds = recogChar.predict(chars)
             result =[]
-            for pred,char in zip(preds,chars): 	    
+            for (pred) in (preds): 	
                 # find the index of the label with the largest corresponding
                 # probability, then extract the probability and label
                 i = np.argmax(pred)
                 prob = pred[i]
-                label = dic[i]
+                label = class_names[i]
                 result.append(label)
                 
                 # cv2.imshow("character",char)
@@ -143,11 +150,7 @@ for img_path in img_files:
             # cv2.drawContours(binary, contours, -1, (0,0,0), 3)
             plate = ''
             # display
-            fig.add_subplot(rows, columns, 2+n)
-            # showing image
-            plt.imshow(Img)
-            plt.axis('off')
-            plt.title("cropped ")
+            
             fig.add_subplot(rows, columns, 3+n)
             # showing image
             plt.imshow(closing)

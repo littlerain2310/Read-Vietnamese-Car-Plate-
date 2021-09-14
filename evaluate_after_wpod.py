@@ -16,7 +16,7 @@ input_dir = sys.argv[1]
 img_files = image_files_from_folder(input_dir)
 
 recogChar = CNN_Model().model
-recogChar.load_weights('good2.h5')
+recogChar.load_weights('new2.h5')
 
 for img_path in img_files:
     # create figure
@@ -46,8 +46,7 @@ for img_path in img_files:
 
         # draw the prediction on the image
         # print(f"Predict >> {label} - {prob * 100:.2f}%")
-        if(prob * 100>50):
-            result.append(label)
+        result.append(label)
     # plate =sorted_Roi(contours,binary)
     # cv2.drawContours(binary, contours, -1, (0,0,0), 3)
     platenum = ''

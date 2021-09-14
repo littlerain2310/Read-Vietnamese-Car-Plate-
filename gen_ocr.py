@@ -46,7 +46,7 @@ wpod_net = load_model(wpod_net_path)
 
 
 recogChar = CNN_Model().model
-recogChar.load_weights('new.h5')
+recogChar.load_weights('new2.h5')
 
 # model = E2E()
 

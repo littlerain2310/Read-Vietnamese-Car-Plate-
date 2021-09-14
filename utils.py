@@ -50,7 +50,7 @@ def json_files_from_folder(folder,upper=True):
 	return img_files
 
 def image_files_from_folder(folder,upper=True):
-	extensions = ['jpg','jpeg','png']
+	extensions = ['jpg','jpeg','png','txt']
 	img_files  = []
 	for ext in extensions:
 		img_files += glob('%s/*.%s' % (folder,ext))
@@ -248,7 +248,11 @@ def contours_one_line(img,closing,avg_height):
 			truly_contour.append(Ndlargestcontour)
 			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
 	return img,truly_contour
-	
+def separate(img,height):
+	Img1= img[:height,:]
+	Img2= img[height:,:]
+	img = np.hstack((Img1, Img2)) 
+	return img
 def segmantation(Img12,filename):
 	# kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
 	# thre_mor = cv2.morphologyEx(binary, cv2.MORPH_DILATE, kernel3)
@@ -275,19 +279,7 @@ def segmantation(Img12,filename):
 	height, width = binary.shape
 	center_height = height / 2
 	binary_inverse = cv2.bitwise_not(closing)
-	#sort by area
-	# areaArray = []
-	# for i, c in enumerate(contours):
-	# 	area = cv2.contourArea(c)
-	# 	areaArray.append(area)
-	# #first sort the array by area
-	# sorteddata = sorted(zip(areaArray, contours), key=lambda x: x[0], reverse=True)
-
-	# cv2.drawContours(img, contours, -1, (255,0,0), 3)
-	# print('width :'+str(width) +'height : '+ str(height))
-	# cv2.imshow('closing',binary)
-	# cv2.waitKey(0)
-	# loop over our contours
+	
 	char = []
 	plate_num = ''
 	number = 0
@@ -378,15 +370,12 @@ def segmantation(Img12,filename):
 		two_line = True
 	if two_line:
 		height_cutoff = height // 2
-		Img1= closing[:height_cutoff,:]
-		Img2= closing[height_cutoff:,:]
-		closing = np.hstack((Img1, Img2)) 
-		Img1= binary[:height_cutoff,:]
-		Img2= binary[height_cutoff:,:]
-		binary = np.hstack((Img1, Img2)) 
-		Img1= img[:height_cutoff,:]
-		Img2= img[height_cutoff:,:]
-		img = np.hstack((Img1, Img2)) 
+		
+		closing = separate(closing,height_cutoff)
+		
+		binary = separate(binary,height_cutoff)
+		
+		img = separate(img,height_cutoff)
 		
  
 	img,truly_contour = contours_one_line(img,closing,avg_height)
@@ -398,12 +387,14 @@ def segmantation(Img12,filename):
 	#sortbyX
 	boxes = sorted(boundingBoxes,key = lambda b :b[0])
 	boxes_4_eval = []
+	char_raw = []
 	if two_line:
 		first_line = boxes[:3]
 		line_two = boxes[3:]
 		for b in first_line:
 			x,y,w,h = b
 			boxes_4_eval.append(b)
+			
 			# print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
 		for b in line_two:
 			x,y,w,h = b
@@ -419,6 +410,7 @@ def segmantation(Img12,filename):
 			# print('x :{}, y : {}'.format(x,y))
 			# print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
 	# boxes = sort_contours(truly_contour,center_height)
+
 	for b in boxes:
 		x,y,w,h = b
 		# print('x :{}, y : {}'.format(x,y))
@@ -426,10 +418,9 @@ def segmantation(Img12,filename):
 		crop = binary[y:y+h,x:x+w]
 		crop=prepare(crop)
 		char.append(crop)
+		crop_img = img[y:y+h,x:x+w]
+		char_raw.append(crop_img)
 		cv2.rectangle(img, (x, y), (x + w, y + h), (0,255 , 0), 2)
-	# char =sorted(char,key= lambda x : x[0])
-	# char =sorted(char,key= lambda x : x[1])
-	# cv2.imshow('Pix',img)
-	# cv2.waitKey(0)
-	return closing,img,char,boxes_4_eval   
+	
+	return closing,img,char,boxes_4_eval,char_raw
 
