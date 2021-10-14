@@ -5,10 +5,11 @@ The project consists of 3 steps :
 
 
 Run 
-python read_plate.py folder <yourimage folder>
+python reader.py --dir <yourimage folder>
 They will read out the plate number
+
+To test the program just run 
+  python reader.py
   
-For example:
-  - python read_plate.py ./test
-  
+
   
