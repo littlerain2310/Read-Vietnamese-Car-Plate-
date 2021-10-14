@@ -97,7 +97,7 @@ for img_path in img_files:
                 Img12 = Img
 
             
-            _,img_draw_char,chars,_ = segmantation(Img12,filename)
+            _,img_draw_char,chars,_ = segmantation(Img12)
             chars = np.array([c for c in chars], dtype="float32")
             if len(chars) < 2:
                 print(filename)
@@ -112,19 +112,12 @@ for img_path in img_files:
                 prob = pred[i]
                 label = class_names[i]
                 result.append(label)
-                # if(prob * 100>55):
-                #     result.append(label)
-                # draw the prediction on the image
-                # print(f"Predict >> {label} - {prob * 100:.2f}%")
-            # plate =sorted_Roi(contours,binary)
-            
-            # cv2.drawContours(binary, contours, -1, (0,0,0), 3)
+               
             for i in result:
                 clean_text = re.sub('[\W_]+', '', i)
                 # clean_text = clean_text.upper()
                 plate += clean_text
-            # cv2.imshow('{}'.format(plate),Img12)
-            # cv2.waitKey(0)
+           
     with open('./OCR_VN/detection/{}.txt'.format(filename), 'w') as f:
         f.write('{}'.format(plate))
         f.close()  

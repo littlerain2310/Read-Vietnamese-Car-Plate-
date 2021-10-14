@@ -20,21 +20,14 @@ def fix_dimension(img):
 
 def prepare(img):
 	
-	# print(binary.shape)    
-	# img = image.img_to_array(img, dtype='uint8')
-	# thresh = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
-	# cv2.THRESH_BINARY,11,2)
+	
 	(tH, tW) = img.shape
 	dX = int(max(0, 28 - tW) / 2.0)
 	dY = int(max(0, 28 - tH) / 2.0)  
 	# pad the image and force 28x28 dimensions
 	padded = cv2.copyMakeBorder(img, top=dY, bottom=dY, left=dX, right=dX, borderType=cv2.BORDER_CONSTANT, value=(0, 0, 0))
 	padded = cv2.resize(img, (28, 28))
-	# prepare the padded image for classification via our
-	# handwriting OCR model
-	# padded = padded.astype("float32") / 255.0
-	# padded = np.expand_dims(padded, axis=-1)
-	# padded = tf.expand_dims(padded, 0) 
+
 	img = fix_dimension(padded)
 	
 	
@@ -141,35 +134,16 @@ def sort_contours(contours,center_height, x_axis_sort='LEFT_TO_RIGHT', y_axis_so
 			char = sorted(boundingBoxes,key=lambda b:b[0])
 	except:
 		char = sorted(boundingBoxes,key=lambda b:b[0])
-	# # sorting on x-axis 
-	# sortedByX = zip(*sorted(zip(contours, boundingBoxes),
-	# key=lambda b:b[1][0], reverse=x_reverse))
 
-	# # sorting on y-axis 
-	# (contours, boundingBoxes) = zip(*sorted(zip(*sortedByX),
-	# key=lambda b:b[1][1], reverse=y_reverse))
-	# # return the list of sorted contours and bounding boxes
 	return char
 def contours_one_line(img,closing,avg_height):
 	contours = cv2.findContours(closing, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 	contours = imutils.grab_contours(contours)
-	# contours = sorted(contours, key=lambda ctr: cv2.boundingRect(ctr)[0])
 	# contours,_ = sort_contours(contours)
 	height, width = closing.shape
 	center_height = height / 2
 	binary_inverse = cv2.bitwise_not(closing)
-	#sort by area
-	# areaArray = []
-	# for i, c in enumerate(contours):
-	# 	area = cv2.contourArea(c)
-	# 	areaArray.append(area)
-	# #first sort the array by area
-	# sorteddata = sorted(zip(areaArray, contours), key=lambda x: x[0], reverse=True)
-
-	# cv2.drawContours(img, contours, -1, (255,0,0), 3)
-	# print('width :'+str(width) +'height : '+ str(height))
-	# cv2.imshow('closing',binary)
-	# cv2.waitKey(0)
+	
 	# loop over our contours
 	
 	candidate = []
@@ -186,18 +160,9 @@ def contours_one_line(img,closing,avg_height):
 		# cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
 		# approximate the contour
 		if   (w / float(width) <0.25) and (height_truly <= 16) and (w / float(width) >0.03) and (height_ratio >0.3) :
-			# print(area_ratio,area)
 
 			candidate.append(c)
-            # # print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
-			# cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
-			# number +=1
-			# crop = binary[y:y+h,x:x+w]
-			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-			# # print(crop.shape)
-			# crop=prepare(crop)
-			# # print(crop.shape)
-			# char.append(crop)
+          
 
 	candidate_rm_inner = []
 	#get rid of inner contours
@@ -237,11 +202,7 @@ def contours_one_line(img,closing,avg_height):
 			Ndlargestcontour = sorteddata[n-1][1]
 			truly_contour.append(Ndlargestcontour)
 			#draw it
-			# x, y, w, h = cv2.boundingRect(Ndlargestcontour)
-			# crop = binary[y:y+h,x:x+w]
-			# crop=prepare(crop)
-			# char.append(crop)
-			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+			
 	else:
 		for n in range(len(sorteddata)):
 			Ndlargestcontour = sorteddata[n-1][1]
@@ -253,17 +214,12 @@ def separate(img,height):
 	Img2= img[height:,:]
 	img = np.hstack((Img1, Img2)) 
 	return img
-def segmantation(Img12,filename):
-	# kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-	# thre_mor = cv2.morphologyEx(binary, cv2.MORPH_DILATE, kernel3)
-	# cv2.imshow('not closing',binary)
-	# cv2.waitKey(0)
+def segmantation(Img12):
 	img = Img12
-	# cv2.imshow('not closing',img)
-	# cv2.waitKey(0)
+	
 	gray = cv2.cvtColor( Img12, cv2.COLOR_BGR2GRAY)
 	blur = cv2.GaussianBlur(gray,(19,19),0)
-	# cv2.imshow("Anh bien so sau chuyen xam", gray)
+	
 	# Ap dung threshold de phan tach so va nen
 	binary = cv2.adaptiveThreshold(blur,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
 	cv2.THRESH_BINARY,11,2)
@@ -274,7 +230,6 @@ def segmantation(Img12,filename):
 	closing = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
 	contours = cv2.findContours(closing, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 	contours = imutils.grab_contours(contours)
-	# contours = sorted(contours, key=lambda ctr: cv2.boundingRect(ctr)[0])
 	# contours,_ = sort_contours(contours)
 	height, width = binary.shape
 	center_height = height / 2
@@ -295,20 +250,12 @@ def segmantation(Img12,filename):
 		area = h * w
 		area_ratio = area / float(width * height)
 		height_ratio = h / float(height)
-		# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+		
 		# approximate the contour
 		if(area_ratio >0.03)and (w / float(width) <0.25) and (float(h) / height > 0.3) and (w / float(width) >0.03) :
 			# print(area)
 			candidate.append(c)
-            # # print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
-			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-			# number +=1
-			# crop = binary[y:y+h,x:x+w]
-			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-			# # print(crop.shape)
-			# crop=prepare(crop)
-			# # print(crop.shape)
-			# char.append(crop)
+           
 
 	candidate_rm_inner = []
 	#get rid of inner contours
@@ -324,12 +271,9 @@ def segmantation(Img12,filename):
 				area2 = cv2.contourArea(candidate[j])
 				if area1 > area2 :
 					candidate_rm_inner.append(candidate[j])
-					# print(ov)
 				else:
-					# print(ov)
 					candidate_rm_inner.append(candidate[i])
 	for c in candidate_rm_inner:
-		# print('a')
 		try:
 			candidate.remove(c)
 		except:
@@ -348,22 +292,12 @@ def segmantation(Img12,filename):
 		for n in range(1,9):
 			Ndlargestcontour = sorteddata[n-1][1]
 			truly_contour.append(Ndlargestcontour)
-			#draw it
-			# x, y, w, h = cv2.boundingRect(Ndlargestcontour)
-			# crop = binary[y:y+h,x:x+w]
-			# crop=prepare(crop)
-			# char.append(crop)
-			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+			
 	else:
 		for n in range(len(sorteddata)):
 			Ndlargestcontour = sorteddata[n-1][1]
 			truly_contour.append(Ndlargestcontour)
-			#draw it
-			# x, y, w, h = cv2.boundingRect(Ndlargestcontour)
-			# crop = binary[y:y+h,x:x+w]
-			# crop=prepare(crop)
-			# char.append(crop)
-			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+			
 	avg_height = cluster_height(truly_contour)
 	two_line = False
 	if avg_height <= center_height:
@@ -395,26 +329,21 @@ def segmantation(Img12,filename):
 			x,y,w,h = b
 			boxes_4_eval.append(b)
 			
-			# print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
 		for b in line_two:
 			x,y,w,h = b
 			x = x -width
 			y = y+height_cutoff
 			b= x,y,w,h
 			boxes_4_eval.append(b)
-			# print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
 	else:
 		boxes_4_eval = boxes
 		for b in boxes:
 			x,y,w,h = b
-			# print('x :{}, y : {}'.format(x,y))
-			# print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
-	# boxes = sort_contours(truly_contour,center_height)
+		
 
 	for b in boxes:
 		x,y,w,h = b
-		# print('x :{}, y : {}'.format(x,y))
-		# print('x1 : {},y1 :{},x2 :{},y2 :{}'.format(x,y,x+w,y+h))
+		
 		crop = binary[y:y+h,x:x+w]
 		crop=prepare(crop)
 		char.append(crop)
