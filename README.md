@@ -9,6 +9,9 @@ python read_plate.py --dir yourfolder --noDir False <yourimage folder>
 or 
 python read_plate.py --image yourimage --noDir True
 They will read out the plate number
+
+To test the program just run 
+  python reader.py
   
 For example:
   - python read_plate.py --dir ./test --noDir False
