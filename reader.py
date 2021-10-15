@@ -19,10 +19,10 @@ class Reader:
         wpod_net_path = "wpod-net_update1.json"
         self.wpod_net = load_model(wpod_net_path)
         self.recogChar = CNN_Model().model
-        self.recogChar.load_weights('new.h5')
+        self.recogChar.load_weights('new2.h5')
         self.characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         self.class_names =  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-    
+        self.result = ''
     def getImg(self,img_path):
         self.Ivehicle = cv2.imread(img_path)
     def readplate(self):
@@ -60,7 +60,7 @@ class Reader:
                     Img12 = Img
                 origin = Img12.copy()
                 
-                closing,img_draw_char,chars,_,_ = segmantation(Img12)
+                closing,img_draw_char,chars,boxes_char,char_raw = segmantation(Img12)
                 
                 chars = np.array([c for c in chars], dtype="float32")
                 if len(chars) <= 2:
@@ -68,7 +68,8 @@ class Reader:
                 self.origin = origin
                 self.closing = closing
                 self.img_draw_char = img_draw_char
-
+                self.boxes_char = boxes_char
+                self.char_raw =char_raw
             #    Classify after cutting number out of plate
                 dic = {}
                 for i,c in enumerate(self.characters):
@@ -81,7 +82,8 @@ class Reader:
                     i = np.argmax(pred)
                     label = self.class_names[i]
                     result+=label
-                self.result = result
+                self.result += result
+    
     def display(self):
         fig = plt.figure(figsize=(10, 7))
         rows = 2
@@ -112,23 +114,31 @@ class Reader:
         plt.title("{}".format(self.result))
 
         plt.show()
+    def reset(self):
+        self.result = ''
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--image', type=str)
     parser.add_argument('--dir', type=str,default='./test')
+    parser.add_argument('--noDir', type=bool)
     args = parser.parse_args()
-    
-    # take input dir and read each file sequencely
-    input_dir = args.dir
-    img_files = image_files_from_folder(input_dir)
     read = Reader()
-    
+    if not args.noDir:
+        # take input dir and read each file sequencely
+        input_dir = args.dir
+        img_files = image_files_from_folder(input_dir)
+        
+        
 
-    #StartReading
-    for img_path in img_files:
+        #StartReading
+        for img_path in img_files:
+            read.getImg(img_path)
+            read.readplate()
+            read.display()
+    else:
+        img_path = args.image
         read.getImg(img_path)
         read.readplate()
         read.display()
-
