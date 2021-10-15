@@ -19,3 +19,5 @@ For example:
 
   
   
+  ![Figure_1](https://user-images.githubusercontent.com/56443812/137426501-3303170b-e2ee-4ce9-9490-6d79782cd90c.png)
+  
