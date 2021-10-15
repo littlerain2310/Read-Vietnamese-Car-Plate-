@@ -1,6 +1,10 @@
 <h1><b>ALPR</b></h1>
 
+<h2>Environments</h2>
+pip install -r requirements.txt
 
+
+<h2>Run</h2>
 The project consists of 3 steps :
 - cut and transform plate (Wpod-net)
 - segment the number (opencv2)
@@ -17,8 +21,8 @@ To test the program just run
   python reader.py
   
 For example:
-  - python read_plate.py --dir ./test --noDir False
-  - python read_plate.py --image test/images.jpeg --noDir True
+  - python reader.py --dir ./test --noDir False
+  - python reader.py --image test/images.jpeg --noDir True
 
   
   
