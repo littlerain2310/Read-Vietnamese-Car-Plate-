@@ -1,4 +1,4 @@
-<b>ALPR<b>
+<h1><b>ALPR</b></h1>
 
 
 The project consists of 3 steps :
