@@ -1,9 +1,0 @@
-character 0.9 28 4 73 76
-character 0.9 80 7 125 80
-character 0.9 89 16 116 71
-character 0.9 131 5 178 80
-character 0.9 212 4 260 80
-character 0.9 268 5 317 80
-character 0.9 321 7 371 80
-character 0.9 330 16 361 76
-character 0.9 375 5 429 80
