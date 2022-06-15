@@ -122,16 +122,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--image', type=str)
     parser.add_argument('--dir', type=str,default='./test')
-    parser.add_argument('--noDir', type=bool)
     args = parser.parse_args()
     read = Reader()
-    if not args.noDir:
+    if args.image is None:
         # take input dir and read each file sequencely
         input_dir = args.dir
         img_files = image_files_from_folder(input_dir)
-        
-        
-
         #StartReading
         for img_path in img_files:
             read.getImg(img_path)

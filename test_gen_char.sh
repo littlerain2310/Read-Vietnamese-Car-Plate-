@@ -1,1 +1,0 @@
-python3 gen_char.py /home/long/Study/AI/Evaluation/mAP/input/images-optional/
