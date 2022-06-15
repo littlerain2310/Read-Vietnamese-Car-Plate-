@@ -1,15 +1,7 @@
-
-import os
-import re
-import fnmatch
-import sys
 from glob import glob
-import tensorflow as tf
 import numpy as np
 import cv2
-from imutils import perspective
-import imutils
-import pytesseract
+
 
 
 def fix_dimension(img): 
@@ -19,8 +11,6 @@ def fix_dimension(img):
   return new_img
 
 def prepare(img):
-	
-	
 	(tH, tW) = img.shape
 	dX = int(max(0, 28 - tW) / 2.0)
 	dY = int(max(0, 28 - tH) / 2.0)  
@@ -136,220 +126,12 @@ def sort_contours(contours,center_height, x_axis_sort='LEFT_TO_RIGHT', y_axis_so
 		char = sorted(boundingBoxes,key=lambda b:b[0])
 
 	return char
-def contours_one_line(img,closing,avg_height):
-	contours = cv2.findContours(closing, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-	contours = imutils.grab_contours(contours)
-	# contours,_ = sort_contours(contours)
-	height, width = closing.shape
-	center_height = height / 2
-	binary_inverse = cv2.bitwise_not(closing)
-	
-	# loop over our contours
-	
-	candidate = []
-	for c in contours:
-		(x, y, w, h) = cv2.boundingRect(c)
-		# cv2.imshow('binary',crop)
-		# cv2.waitKey(0)
-		ratio = h / float(w)
-		solidity = cv2.contourArea(c) / float(w * h)
-		area = h * w
-		area_ratio = area / float(width * height)
-		height_ratio = h / float(height)
-		height_truly = abs(h - avg_height)
-		# cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
-		# approximate the contour
-		if   (w / float(width) <0.25) and (height_truly <= 16) and (w / float(width) >0.03) and (height_ratio >0.3) :
 
-			candidate.append(c)
-          
-
-	candidate_rm_inner = []
-	#get rid of inner contours
-	n = len(candidate)
-	for i in range(n):
-		for j in range(i+1, n):
-			# print(j)
-			# print(len(candidate))
-			ov = calculating_IOU(candidate[i],candidate[j])
-			if ov > 0.3:
-				area1 = cv2.contourArea(candidate[i])
-				area2 = cv2.contourArea(candidate[j])
-				if area1 > area2 :
-					candidate_rm_inner.append(candidate[j])
-					# print(ov)
-				else:
-					# print(ov)
-					candidate_rm_inner.append(candidate[i])
-	for c in candidate_rm_inner:
-		# print('a')
-		try:
-			candidate.remove(c)
-		except:
-			pass
 	
-	#sort by area
-	areaArray = []
-	truly_contour = []
-	for i, c in enumerate(candidate):
-		area = cv2.contourArea(c)
-		areaArray.append(area)
-	#first sort the array by area
-	sorteddata = sorted(zip(areaArray, candidate), key=lambda x: x[0], reverse=True)
-	# print(len(sorteddata))
-	if len(sorteddata) >7:
-		for n in range(1,9):
-			Ndlargestcontour = sorteddata[n-1][1]
-			truly_contour.append(Ndlargestcontour)
-			#draw it
-			
-	else:
-		for n in range(len(sorteddata)):
-			Ndlargestcontour = sorteddata[n-1][1]
-			truly_contour.append(Ndlargestcontour)
-			# cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-	return img,truly_contour
 def separate(img,height):
 	Img1= img[:height,:]
 	Img2= img[height:,:]
 	img = np.hstack((Img1, Img2)) 
 	return img
-def segmantation(Img12):
-	img = Img12
-	
-	gray = cv2.cvtColor( Img12, cv2.COLOR_BGR2GRAY)
-	blur = cv2.GaussianBlur(gray,(19,19),0)
-	
-	# Ap dung threshold de phan tach so va nen
-	binary = cv2.adaptiveThreshold(blur,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
-	cv2.THRESH_BINARY,11,2)
-	binary = cv2.bitwise_not(binary)
-			
-	kernel = np.ones((5,5),np.uint8)
-	# dilation = cv2.dilate(binary,kernel,iterations = 1)
-	closing = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
-	contours = cv2.findContours(closing, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-	contours = imutils.grab_contours(contours)
-	# contours,_ = sort_contours(contours)
-	height, width = binary.shape
-	center_height = height / 2
-	binary_inverse = cv2.bitwise_not(closing)
-	
-	char = []
-	plate_num = ''
-	number = 0
-	pts = ''
-	candidate = []
-	for c in contours:
-		(x, y, w, h) = cv2.boundingRect(c)
-		crop = img[y:y+h,x:x+w]
-		# cv2.imshow('binary',crop)
-		# cv2.waitKey(0)
-		ratio = h / float(w)
-		solidity = cv2.contourArea(c) / float(w * h)
-		area = h * w
-		area_ratio = area / float(width * height)
-		height_ratio = h / float(height)
-		
-		# approximate the contour
-		if(area_ratio >0.03)and (w / float(width) <0.25) and (float(h) / height > 0.3) and (w / float(width) >0.03) :
-			# print(area)
-			candidate.append(c)
-           
 
-	candidate_rm_inner = []
-	#get rid of inner contours
-	n = len(candidate)
-	# print(n)
-	for i in range(n):
-		for j in range(i+1, n):
-			# print(j)
-			# print(len(candidate))
-			ov = calculating_IOU(candidate[i],candidate[j])
-			if ov > 0.3:
-				area1 = cv2.contourArea(candidate[i])
-				area2 = cv2.contourArea(candidate[j])
-				if area1 > area2 :
-					candidate_rm_inner.append(candidate[j])
-				else:
-					candidate_rm_inner.append(candidate[i])
-	for c in candidate_rm_inner:
-		try:
-			candidate.remove(c)
-		except:
-			pass
-	
-	#sort by area
-	areaArray = []
-	truly_contour = []
-	for i, c in enumerate(candidate):
-		area = cv2.contourArea(c)
-		areaArray.append(area)
-	#first sort the array by area
-	sorteddata = sorted(zip(areaArray, candidate), key=lambda x: x[0], reverse=True)
-	# print(len(sorteddata))
-	if len(sorteddata) >7:
-		for n in range(1,9):
-			Ndlargestcontour = sorteddata[n-1][1]
-			truly_contour.append(Ndlargestcontour)
-			
-	else:
-		for n in range(len(sorteddata)):
-			Ndlargestcontour = sorteddata[n-1][1]
-			truly_contour.append(Ndlargestcontour)
-			
-	avg_height = cluster_height(truly_contour)
-	two_line = False
-	if avg_height <= center_height:
-		two_line = True
-	if two_line:
-		height_cutoff = height // 2
-		
-		closing = separate(closing,height_cutoff)
-		
-		binary = separate(binary,height_cutoff)
-		
-		img = separate(img,height_cutoff)
-		
- 
-	img,truly_contour = contours_one_line(img,closing,avg_height)
-
-	height_2, width_2 = closing.shape
-	center_height = height_2 / 2
-
-	boundingBoxes = [cv2.boundingRect(c) for c in truly_contour]
-	#sortbyX
-	boxes = sorted(boundingBoxes,key = lambda b :b[0])
-	boxes_4_eval = []
-	char_raw = []
-	if two_line:
-		first_line = boxes[:3]
-		line_two = boxes[3:]
-		for b in first_line:
-			x,y,w,h = b
-			boxes_4_eval.append(b)
-			
-		for b in line_two:
-			x,y,w,h = b
-			x = x -width
-			y = y+height_cutoff
-			b= x,y,w,h
-			boxes_4_eval.append(b)
-	else:
-		boxes_4_eval = boxes
-		for b in boxes:
-			x,y,w,h = b
-		
-
-	for b in boxes:
-		x,y,w,h = b
-		
-		crop = binary[y:y+h,x:x+w]
-		crop=prepare(crop)
-		char.append(crop)
-		crop_img = img[y:y+h,x:x+w]
-		char_raw.append(crop_img)
-		cv2.rectangle(img, (x, y), (x + w, y + h), (0,255 , 0), 2)
-	
-	return closing,img,char,boxes_4_eval,char_raw
 

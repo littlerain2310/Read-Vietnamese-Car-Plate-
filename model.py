@@ -1,7 +1,6 @@
 import tensorflow as tf
 import keras
 import numpy as np
-from tensorflow.keras import layers
 from keras import optimizers
 from keras.layers import Dense, Conv2D, MaxPooling2D, Dropout, Flatten
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint

@@ -3,9 +3,8 @@ from lib_detection import load_model, detect_lp, im2single
 from model import CNN_Model
 import cv2
 import numpy as np
-from utils import image_files_from_folder,segmantation
-import argparse
 import matplotlib.pyplot as plt
+from detect_number import Segmentation
 
 class Reader:
     """
@@ -19,7 +18,7 @@ class Reader:
         wpod_net_path = "wpod-net_update1.json"
         self.wpod_net = load_model(wpod_net_path)
         self.recogChar = CNN_Model().model
-        self.recogChar.load_weights('new2.h5')
+        self.recogChar.load_weights('CNN.h5')
         self.characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         self.class_names =  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
         self.result = ''
@@ -60,8 +59,8 @@ class Reader:
                     Img12 = Img
                 origin = Img12.copy()
                 
-                closing,img_draw_char,chars,boxes_char,char_raw = segmantation(Img12)
-                
+                segment = Segmentation(Img12)
+                closing,img_draw_char,chars,boxes_char,char_raw = segment.segmenation()
                 chars = np.array([c for c in chars], dtype="float32")
                 if len(chars) <= 2:
                     return
@@ -112,29 +111,9 @@ class Reader:
         plt.imshow(self.img_draw_char)
         plt.axis('off')
         plt.title("{}".format(self.result))
-
+        self.result = ''
         plt.show()
     def reset(self):
         self.result = ''
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--image', type=str)
-    parser.add_argument('--dir', type=str,default='./test')
-    args = parser.parse_args()
-    read = Reader()
-    if args.image is None:
-        # take input dir and read each file sequencely
-        input_dir = args.dir
-        img_files = image_files_from_folder(input_dir)
-        #StartReading
-        for img_path in img_files:
-            read.getImg(img_path)
-            read.readplate()
-            read.display()
-    else:
-        img_path = args.image
-        read.getImg(img_path)
-        read.readplate()
-        read.display()
