@@ -1,5 +1,7 @@
 <h1><b>ALPR</b></h1>
 
+<b>See clean branch for cleaner code</b>
+
 <h2>Environments</h2>
 pip install -r requirements.txt
 
